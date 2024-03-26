@@ -55,6 +55,13 @@ func fibonacci() func(int) int {
 	}
 }
 
+// Chapter Method and interface
+
+type IPAddr [4]byte
+
+func (ip IPAddr) String() string {
+	return fmt.Sprintf("%v.%v.%v.%v", ip[0], ip[1], ip[2], ip[3])
+}
 func main() {
 
 	fmt.Println("=======Slices========")
@@ -67,5 +74,13 @@ func main() {
 	f := fibonacci()
 	for i := 0; i < 10; i++ {
 		fmt.Println(f(i))
+	}
+	fmt.Println("=======Stringer========")
+	hosts := map[string]IPAddr{
+		"myPC":      {127, 0, 0, 1},
+		"googleDNS": {8, 8, 8, 8},
+	}
+	for name, ip := range hosts {
+		fmt.Printf("%v : %v\n", name, ip)
 	}
 }
