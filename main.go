@@ -39,24 +39,31 @@ func WordCount(s string) map[string]int {
 //
 //	Functions
 func fibonacci() func(int) int {
-	result := 0
+	var s []int
 	return func(x int) int {
-		result += x
+		var result int
+		if x == 0 {
+			result = 0
+		} else if x == 1 {
+			result = 1
+		} else {
+			result = s[x-1] + s[x-2]
+		}
+
+		s = append(s, result)
 		return result
 	}
 }
+
 func main() {
-	//=======================================
-	//					Slices
+
+	fmt.Println("=======Slices========")
 	pic.Show(Pic)
 
-	//=======================================
-	//					Maps
-
+	fmt.Println("=======Maps========")
 	wc.Test(WordCount)
 
-	//=======================================
-	//					Functions
+	fmt.Println("=======Functions========")
 	f := fibonacci()
 	for i := 0; i < 10; i++ {
 		fmt.Println(f(i))
