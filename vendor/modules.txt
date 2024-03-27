@@ -1,4 +1,5 @@
 # golang.org/x/tour v0.1.0
 ## explicit; go 1.16
 golang.org/x/tour/pic
+golang.org/x/tour/reader
 golang.org/x/tour/wc
