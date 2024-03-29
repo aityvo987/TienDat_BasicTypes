@@ -11,6 +11,7 @@ import (
 
 	"golang.org/x/tour/pic"
 	"golang.org/x/tour/reader"
+	"golang.org/x/tour/tree"
 	"golang.org/x/tour/wc"
 )
 
@@ -147,6 +148,45 @@ func (i Image) At(x, y int) color.Color {
 	return color.RGBA{i.color + uint8(x), i.color + uint8(y), 255, 255}
 }
 
+// type List[T any] struct {
+// 	next *List[T]
+// 	val  T
+// }
+
+// Generic
+func Equal[T comparable](s []T, t T) int {
+	for i, v := range s {
+		if v == t {
+			return i
+		}
+	}
+	return -1
+}
+
+// Binary Tree
+func Walk(t *tree.Tree, ch chan int) {
+	if t.Left != nil {
+		Walk(t.Left, ch)
+	}
+	ch <- t.Value
+	if t.Right != nil {
+		Walk(t.Right, ch)
+	}
+}
+func Same(t1 *tree.Tree, t2 *tree.Tree) bool {
+	c1 := make(chan int)
+	c2 := make(chan int)
+	go Walk(t1, c1)
+	go Walk(t2, c2)
+	for i := 0; i < 10; i++ {
+		a := <-c1
+		b := <-c2
+		if a != b {
+			return false
+		}
+	}
+	return true
+}
 func main() {
 	defer fmt.Println("-----------End of File-----------")
 	fmt.Println("=======Slices========")
@@ -183,4 +223,19 @@ func main() {
 	fmt.Println("=======Image========")
 	m := Image{100, 55, 255}
 	pic.ShowImage(m)
+
+	fmt.Println("=======Generic========")
+	g := []int{1, 2, 3, 4, 5}
+	fmt.Printf("Position of  %v in slice %v is %v \n", 5, g, Equal(g, 5))
+
+	// fmt.Println("=======List========")
+	// l:=List{}
+	// pic.ShowImage(m)
+	fmt.Println("=======BinaryTree========")
+	chanB := make(chan int)
+	go Walk(tree.New(1), chanB)
+	for i := 0; i < 10; i++ {
+		fmt.Println(<-chanB)
+	}
+	fmt.Println(Same(tree.New(1), tree.New(2)))
 }
