@@ -2,4 +2,5 @@
 ## explicit; go 1.16
 golang.org/x/tour/pic
 golang.org/x/tour/reader
+golang.org/x/tour/tree
 golang.org/x/tour/wc
