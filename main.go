@@ -8,6 +8,7 @@ import (
 	"math"
 	"os"
 	"strings"
+	"sync"
 
 	"golang.org/x/tour/pic"
 	"golang.org/x/tour/reader"
@@ -187,6 +188,54 @@ func Same(t1 *tree.Tree, t2 *tree.Tree) bool {
 	}
 	return true
 }
+
+// Web Crawler
+type Fetcher interface {
+	Fetch(url string) (body string, urls []string, err error)
+}
+type Locker struct {
+	m sync.Mutex
+	v map[string]int
+}
+
+func (l *Locker) Inc(s string) {
+	l.m.Lock()
+	l.v[s]++
+	l.m.Unlock()
+}
+
+func Crawl(url string, depth int, fet Fetcher, l *Locker, c chan string) {
+	defer close(c)
+	if depth < 0 {
+		return
+	}
+
+	if l.v[url] != 0 {
+		fmt.Println("Duplicate URL", url)
+		return
+	}
+	l.Inc(url)
+	body, urls, err := fet.Fetch(url)
+
+	if err != nil {
+		fmt.Println("Error ", err)
+		return
+	}
+
+	c <- fmt.Sprintf("found: %s %q", url, body)
+
+	cn := make([]chan string, len(urls))
+	for i, u := range urls {
+		cn[i] = make(chan string)
+		go Crawl(u, depth-1, fet, l, cn[i])
+	}
+	for i := range cn {
+		for s := range cn[i] {
+			c <- s
+		}
+	}
+}
+
 func main() {
 	defer fmt.Println("-----------End of File-----------")
 	fmt.Println("=======Slices========")
@@ -238,4 +287,58 @@ func main() {
 		fmt.Println(<-chanB)
 	}
 	fmt.Println(Same(tree.New(1), tree.New(2)))
+	fmt.Println("=======Web Crawler========")
+	l := Locker{v: make(map[string]int)}
+	cn := make(chan string)
+	go Crawl("https://golang.org/", 4, fetcher, &l, cn)
+	for s := range cn {
+		fmt.Println(s)
+	}
+}
+
+type fakeResult struct {
+	body string
+	urls []string
+}
+
+type FakeFetcher map[string]*fakeResult
+
+func (f FakeFetcher) Fetch(url string) (string, []string, error) {
+	if res, ok := f[url]; ok {
+		return res.body, res.urls, nil
+	}
+	return "", nil, fmt.Errorf("not found %v", url)
+}
+
+var fetcher = FakeFetcher{
+	"https://golang.org/": &fakeResult{
+		"The Go Programming Language",
+		[]string{
+			"https://golang.org/pkg/",
+			"https://golang.org/cmd/",
+		},
+	},
+	"https://golang.org/pkg/": &fakeResult{
+		"Packages",
+		[]string{
+			"https://golang.org/",
+			"https://golang.org/cmd/",
+			"https://golang.org/pkg/fmt/",
+			"https://golang.org/pkg/os/",
+		},
+	},
+	"https://golang.org/pkg/fmt/": &fakeResult{
+		"Package fmt",
+		[]string{
+			"https://golang.org/",
+			"https://golang.org/pkg/",
+		},
+	},
+	"https://golang.org/pkg/os/": &fakeResult{
+		"Package os",
+		[]string{
+			"https://golang.org/",
+			"https://golang.org/pkg/",
+		},
+	},
 }
